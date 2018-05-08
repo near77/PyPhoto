@@ -21,4 +21,13 @@ class blur():
     def __init__(self,filename):
         pass
 
+import pathlib
+
+#define the path
+ImageDirectory = pathlib.Path('image/.')
+
+for ImageFile in ImageDirectory.iterdir():  
+    print(ImageFile)
+
+
 
