@@ -1,8 +1,8 @@
 import sys
 from PyQt5 import QtGui,QtWidgets,QtCore
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QFileDialog, QLabel
-import cv2
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
@@ -14,12 +14,12 @@ class Window(QtWidgets.QMainWindow):
         extractAction.setShortcut('Ctrl+Q')
         extractAction.setStatusTip('Quit the App')
         extractAction.triggered.connect(self.close_application)
-        '''
+        
         openImageT = QtWidgets.QAction('&ImageTable',self)
         openImageT.setShortcut('Ctrl+W')
         openImageT.setStatusTip('Open Image Table')
         openImageT.triggered.connect(self.imageTable)
-        '''
+        
         openImage = QtWidgets.QAction('&Open Image',self)
         openImage.setShortcut('Ctrl+I')
         openImage.setStatusTip('Open Image')
@@ -28,11 +28,11 @@ class Window(QtWidgets.QMainWindow):
         self.statusBar()
         mainMenu = self.menuBar()
         fileMenu = mainMenu.addMenu('&File')
-        #fileMenu.addAction(extractAction)
+        fileMenu.addAction(extractAction)
         fileMenu.addAction(openImage)
 
         imageTMenu = mainMenu.addMenu('&ImageTable')
-        #imageTMenu.addAction(openImageT)
+        imageTMenu.addAction(openImageT)
 
         self.home()
 
@@ -89,6 +89,3 @@ def run():
     sys.exit(app.exec_())
 
 run()
-
-
-
