@@ -1,26 +1,20 @@
 import cv2
 import os
 from PIL import ImageTk, Image
-class hello():
-    def __init__(self,statement):
-        self.statement = statement
-    def say(self):
-        print('Hello '+self.statement)
+import matplotlib.pyplot as plt
+img = cv2.imread('../image/doge.jpg')
+def grey_scale(img):
+    img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    return img
 
-def test_cv():
-    cap=cv2.VideoCapture(0)
-    while True:
-        ret,image_np=cap.read()
-        cv2.imshow('object detection',image_np)
-        if cv2.waitKey(25)&0xFF==ord('q'):
-            cv2.destroyAllWindows()
-            break
-    cap.release()
+imgg = grey_scale(img)
+plt.imshow(imgg, cmap = plt.get_cmap('gray'))
+plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
+plt.show()
 
-class blur():
-    def __init__(self,filename):
-        pass
+cv2.destroyAllWindows()
 
+'''
 import pathlib
 
 #define the path
@@ -29,5 +23,5 @@ ImageDirectory = pathlib.Path('image/.')
 for ImageFile in ImageDirectory.iterdir():  
     print(ImageFile)
 
-
+'''
 
