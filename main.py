@@ -1,16 +1,17 @@
-import sys
-from PyQt5 import QtGui,QtWidgets,QtCore
-from PyQt5.QtGui import *
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+import Dialog1
+import sys
 import cv2
 import os
 
 name = 0
 File = 0
 
-class Window(QtWidgets.QMainWindow):
+class Ui_Form(QtWidgets.QMainWindow):
     def __init__(self):
-        super(Window, self).__init__()
+        super(Ui_Form, self).__init__()
         self.setGeometry(50,50,850,650)
         self.setWindowTitle('QT5')
         self.setWindowIcon(QtGui.QIcon('icon/pythonimg.png'))
@@ -52,7 +53,6 @@ class Window(QtWidgets.QMainWindow):
         imageMenu.addAction(BackOrigin)
 
         self.home()
-
     def home(self):
         extractAction = QtWidgets.QAction(QtGui.QIcon('image/icon/logout.png'),'Flee the Scene', self)
         extractAction.triggered.connect(self.close_application)
@@ -74,7 +74,11 @@ class Window(QtWidgets.QMainWindow):
         self.toolBar = self.addToolBar("Save to album")
         self.toolBar.addAction(Save)
 
-        
+        Jump1 = QtWidgets.QAction(QtGui.QIcon('image/icon/logout.png'),'Jump to edit', self)
+        Jump1.triggered.connect(self.jump_to_demo1)
+        self.toolBar = self.addToolBar("Jump to edit")
+        self.toolBar.addAction(Jump1)
+
         self.show()
     
     
@@ -84,8 +88,6 @@ class Window(QtWidgets.QMainWindow):
         self.pixmap = pixmap1.scaled(self.width(),self.height())
         self.imageT.setPixmap(self.pixmap)
         self.setCentralWidget(self.imageT)
-    
-        
         
     def open_image(self):
         global name 
@@ -145,9 +147,27 @@ class Window(QtWidgets.QMainWindow):
         self.imageT.setMinimumSize(400,300)
         self.setCentralWidget(self.imageT)
 
-def run():
-    app = QtWidgets.QApplication(sys.argv)
-    GUI = Window()
-    sys.exit(app.exec_())
+    def retranslateUi(self, Form):
+        _translate = QtCore.QCoreApplication.translate
+        Form.setWindowTitle(_translate("Form", "Form"))
+        self.btn_d1.setText(_translate("Form", "Demo1"))
+        self.btn_d1.clicked.connect(self.jump_to_demo1)
+        self.btn_exit.setText(_translate("Form", "Exit"))
+        self.btn_exit.clicked.connect(self.exit)
 
-run()
+    def jump_to_demo1(self):        
+        self.hide()
+        form1 = QtWidgets.QDialog()
+        ui = Dialog1.Ui_Dialog1()
+        ui.setupUi(form1)
+        form1.show()
+        form1.exec_()
+        self.show()
+
+    def exit(self):
+        self.form.close()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = Ui_Form()
+    sys.exit(app.exec_())
