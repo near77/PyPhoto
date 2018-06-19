@@ -121,6 +121,19 @@ class Window(QtWidgets.QMainWindow):
         self.imageT.setMinimumSize(400,300)
         self.setCentralWidget(self.imageT)
 
+    def sharp(self):
+        global File
+        img_file = cv2.imread(File)
+        #sharp function
+        cv2.imwrite('image/template/template.jpg',img_file)
+        self.imageTable()
+        File2 = 'image/template/template.jpg'
+        pixmap1 = QPixmap(File2)
+        self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+        self.imageT.setPixmap(self.pixmap)
+        self.imageT.setMinimumSize(400,300)
+        self.setCentralWidget(self.imageT)
+
     def back_to_origin(self):
         global File
         self.imageTable()
