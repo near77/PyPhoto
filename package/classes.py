@@ -4,11 +4,27 @@ from PIL import ImageTk, Image
 import matplotlib.pyplot as plt
 
 
-path = os.path.abspath('')
-path = path+'/image/template/'
-print(path)
-fileNum = 0
-for item in os.listdir(path):
-    fileNum = fileNum+1
-print(fileNum)
+class Stack():
+    def __init__(self):
+        self.content = []
 
+    def pop(self):
+        target = self.content.pop() 
+        return target
+
+    def append(self,item):
+        self.content.append(item)
+    
+    def pop_status(self):
+        new_stack = self.content
+        target = new_stack.pop()
+        return target
+
+a = Stack()
+a.append("cc")
+print(a.content)
+a.append("bb")
+print(a.content)
+b = a.pop()
+print(a.content)
+print(b)

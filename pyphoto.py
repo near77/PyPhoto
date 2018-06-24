@@ -2,11 +2,15 @@ import sys
 from PyQt5 import QtGui,QtWidgets,QtCore
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from package.classes import Stack
+import numpy as np
 import cv2
 import os
 
 name = 0
 File = 0
+
+ImageStatus = Stack()
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
@@ -40,6 +44,14 @@ class Window(QtWidgets.QMainWindow):
         BackOrigin.setStatusTip('Back to original image')
         BackOrigin.triggered.connect(self.back_to_origin)
 
+        Sharpen = QtWidgets.QAction('&Sharpen', self)
+        Sharpen.setStatusTip('Sharpen image')
+        Sharpen.triggered.connect(self.sharpen)
+
+        Previous = QtWidgets.QAction('&Previous', self)
+        Previous.setStatusTip('Previous image')
+        Previous.triggered.connect(self.previous)
+
         self.statusBar()
 
         mainMenu = self.menuBar()
@@ -64,6 +76,16 @@ class Window(QtWidgets.QMainWindow):
         self.toolBar = self.addToolBar("Grayscale")
         self.toolBar.addAction(Grayscale)
 
+        Sharp = QtWidgets.QAction(QtGui.QIcon('image/icon/sharpen.png'),'Sharpen', self)
+        Sharp.triggered.connect(self.sharpen)
+        self.toolBar = self.addToolBar("Sharpen")
+        self.toolBar.addAction(Sharp)
+
+        PreviousImg = QtWidgets.QAction(QtGui.QIcon('image/icon/previous.png'),'Previous', self)
+        PreviousImg.triggered.connect(self.previous)
+        self.toolBar = self.addToolBar("Previous")
+        self.toolBar.addAction(PreviousImg)
+
         BackToOrigin = QtWidgets.QAction(QtGui.QIcon('image/icon/bto.png'),'BackToOrigin', self)
         BackToOrigin.triggered.connect(self.back_to_origin)
         self.toolBar = self.addToolBar("BackToOrigin")
@@ -74,7 +96,6 @@ class Window(QtWidgets.QMainWindow):
         self.toolBar = self.addToolBar("Save to album")
         self.toolBar.addAction(Save)
 
-        
         self.show()
     
     
@@ -84,8 +105,6 @@ class Window(QtWidgets.QMainWindow):
         self.pixmap = pixmap1.scaled(self.width(),self.height())
         self.imageT.setPixmap(self.pixmap)
         self.setCentralWidget(self.imageT)
-    
-        
         
     def open_image(self):
         global name 
@@ -93,6 +112,9 @@ class Window(QtWidgets.QMainWindow):
         global File
         File = name[0]
         img_file = cv2.imread(File)
+        global ImageStatus
+        ImageStatus.content = []
+        ImageStatus.append(img_file)
         cv2.imwrite('image/template/template.jpg',img_file)
         self.imageTable()
         pixmap1 = QPixmap(File)
@@ -110,8 +132,13 @@ class Window(QtWidgets.QMainWindow):
             pass
     
     def grayscale(self):
-        global File
-        img_file = cv2.imread(File, 0)
+        global ImageStatus
+        img_file = ImageStatus.pop_status()
+        try:
+            img_file = cv2.cvtColor(img_file,cv2.COLOR_BGR2GRAY)
+        except:
+            img_file = img_file
+        ImageStatus.append(img_file)
         cv2.imwrite('image/template/template.jpg',img_file)
         self.imageTable()
         File2 = 'image/template/template.jpg'
@@ -121,10 +148,12 @@ class Window(QtWidgets.QMainWindow):
         self.imageT.setMinimumSize(400,300)
         self.setCentralWidget(self.imageT)
 
-    def sharp(self):
-        global File
-        img_file = cv2.imread(File)
-        #sharp function
+    def sharpen(self):
+        global ImageStatus
+        img_file = ImageStatus.pop_status()
+        kernel_sharpening = np.array([[-1,-1,-1],[-1,9,-1],[-1,-1,-1]])
+        img_file = cv2.filter2D(img_file, -1, kernel_sharpening)
+        ImageStatus.append(img_file)
         cv2.imwrite('image/template/template.jpg',img_file)
         self.imageTable()
         File2 = 'image/template/template.jpg'
@@ -134,8 +163,24 @@ class Window(QtWidgets.QMainWindow):
         self.imageT.setMinimumSize(400,300)
         self.setCentralWidget(self.imageT)
 
+    def previous(self):
+        global ImageStatus
+        img_file = ImageStatus.pop()
+        cv2.imwrite('image/template/template.jpg',img_file)
+        self.imageTable()
+        File2 = 'image/template/template.jpg'
+        pixmap1 = QPixmap(File2)
+        self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+        self.imageT.setPixmap(self.pixmap)
+        self.imageT.setMinimumSize(400,300)
+        self.setCentralWidget(self.imageT)
+    
     def back_to_origin(self):
         global File
+        img_file = cv2.imread(File)
+        global ImageStatus
+        ImageStatus.content = []
+        ImageStatus.content.append(img_file)
         self.imageTable()
         pixmap1 = QPixmap(File)
         self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
