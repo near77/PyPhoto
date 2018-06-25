@@ -11,6 +11,7 @@ name = 0
 File = 0
 
 ImageStatus = Stack()
+GreyScaleOri = None
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
@@ -34,15 +35,14 @@ class Window(QtWidgets.QMainWindow):
         openImage.setStatusTip('Open Image')
         openImage.triggered.connect(self.open_image)
 
-        GreyScale = QtWidgets.QAction('&Grayscale', self)
-        GreyScale.setShortcut('Ctrl+G')
-        GreyScale.setStatusTip('Grayscale image')
-        GreyScale.triggered.connect(self.grayscale)
-
         BackOrigin = QtWidgets.QAction('&Back to origin', self)
         BackOrigin.setShortcut('Ctrl+O')
         BackOrigin.setStatusTip('Back to original image')
         BackOrigin.triggered.connect(self.back_to_origin)
+
+        GreyScale = QtWidgets.QAction('&Grayscale', self)
+        GreyScale.setStatusTip('Grayscale image')
+        GreyScale.triggered.connect(self.grayscale)
 
         Sharpen = QtWidgets.QAction('&Sharpen', self)
         Sharpen.setStatusTip('Sharpen image')
@@ -70,12 +70,12 @@ class Window(QtWidgets.QMainWindow):
         extractAction.triggered.connect(self.close_application)
         self.toolBar = self.addToolBar("Extraction")
         self.toolBar.addAction(extractAction)
-
+        
         Grayscale = QtWidgets.QAction(QtGui.QIcon('image/icon/pythonimg.png'),'Grayscale', self)
         Grayscale.triggered.connect(self.grayscale)
         self.toolBar = self.addToolBar("Grayscale")
         self.toolBar.addAction(Grayscale)
-
+    
         Sharp = QtWidgets.QAction(QtGui.QIcon('image/icon/sharpen.png'),'Sharpen', self)
         Sharp.triggered.connect(self.sharpen)
         self.toolBar = self.addToolBar("Sharpen")
@@ -132,76 +132,134 @@ class Window(QtWidgets.QMainWindow):
             pass
     
     def grayscale(self):
+        global File
         global ImageStatus
-        img_file = ImageStatus.pop_status()
-        try:
-            img_file = cv2.cvtColor(img_file,cv2.COLOR_BGR2GRAY)
-        except:
-            img_file = img_file
-        ImageStatus.append(img_file)
-        cv2.imwrite('image/template/template.jpg',img_file)
-        self.imageTable()
-        File2 = 'image/template/template.jpg'
-        pixmap1 = QPixmap(File2)
-        self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
-        self.imageT.setPixmap(self.pixmap)
-        self.imageT.setMinimumSize(400,300)
-        self.setCentralWidget(self.imageT)
+        global GreyScaleOri
+        if File != 0:
+            img_file = ImageStatus.pop_status()
+            if img_file.ndim == 3:
+                GreyScaleOri = img_file
+                img_file = cv2.cvtColor(img_file,cv2.COLOR_BGR2GRAY)
+            elif img_file.ndim == 2:
+                img_file = GreyScaleOri
+            ImageStatus.append(img_file)
+            cv2.imwrite('image/template/template.jpg',img_file)
+            self.imageTable()
+            File2 = 'image/template/template.jpg'
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
 
     def sharpen(self):
+        global File
         global ImageStatus
-        img_file = ImageStatus.pop_status()
-        kernel_sharpening = np.array([[-1,-1,-1],[-1,9,-1],[-1,-1,-1]])
-        img_file = cv2.filter2D(img_file, -1, kernel_sharpening)
-        ImageStatus.append(img_file)
-        cv2.imwrite('image/template/template.jpg',img_file)
-        self.imageTable()
-        File2 = 'image/template/template.jpg'
-        pixmap1 = QPixmap(File2)
-        self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
-        self.imageT.setPixmap(self.pixmap)
-        self.imageT.setMinimumSize(400,300)
-        self.setCentralWidget(self.imageT)
+        if File != 0:
+            img_file = ImageStatus.pop_status()
+            kernel_sharpening = np.array([[-1,-1,-1],[-1,9,-1],[-1,-1,-1]])
+            img_file = cv2.filter2D(img_file, -1, kernel_sharpening)
+            ImageStatus.append(img_file)
+            cv2.imwrite('image/template/template.jpg',img_file)
+            self.imageTable()
+            File2 = 'image/template/template.jpg'
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
 
     def previous(self):
+        global File
         global ImageStatus
-        img_file = ImageStatus.pop()
-        cv2.imwrite('image/template/template.jpg',img_file)
-        self.imageTable()
-        File2 = 'image/template/template.jpg'
-        pixmap1 = QPixmap(File2)
-        self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
-        self.imageT.setPixmap(self.pixmap)
-        self.imageT.setMinimumSize(400,300)
-        self.setCentralWidget(self.imageT)
+        if File != 0:
+            try:
+                if len(ImageStatus.content) == 1:
+                    img_file = ImageStatus.pop_status()
+                else:
+                    ImageStatus.pop()
+                    img_file = ImageStatus.pop_status()
+            except:
+                pass
+            cv2.imwrite('image/template/template.jpg',img_file)
+            self.imageTable()
+            File2 = 'image/template/template.jpg'
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
     
     def back_to_origin(self):
         global File
-        img_file = cv2.imread(File)
         global ImageStatus
-        ImageStatus.content = []
-        ImageStatus.content.append(img_file)
-        self.imageTable()
-        pixmap1 = QPixmap(File)
-        self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
-        self.imageT.setPixmap(self.pixmap)
-        self.imageT.setMinimumSize(400,300)
-        self.setCentralWidget(self.imageT)
+        if File != 0:
+            img_file = cv2.imread(File)
+            ImageStatus.content = []
+            ImageStatus.content.append(img_file)
+            self.imageTable()
+            pixmap1 = QPixmap(File)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
 
     def save_to_album(self):
-        path = os.path.abspath('')+'/image/album/'
-        fileNum = 0
-        for item in os.listdir(path):
-            fileNum = fileNum+1
-        File = 'image/template/template.jpg'
-        self.imageTable()
-        pixmap1 = QPixmap(File)
-        img_file = cv2.imread(File)
-        cv2.imwrite(path+str(fileNum)+'.jpg',img_file)
-        self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
-        self.imageT.setPixmap(self.pixmap)
-        self.imageT.setMinimumSize(400,300)
-        self.setCentralWidget(self.imageT)
+        global File
+        if File != 0:
+            path = os.path.abspath('')+'/image/album/'
+            fileNum = 0
+            for item in os.listdir(path):
+                fileNum = fileNum+1
+            File = 'image/template/template.jpg'
+            self.imageTable()
+            pixmap1 = QPixmap(File)
+            img_file = cv2.imread(File)
+            cv2.imwrite(path+str(fileNum)+'.jpg',img_file)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
 
 def run():
     app = QtWidgets.QApplication(sys.argv)

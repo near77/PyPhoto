@@ -16,15 +16,18 @@ class Stack():
         self.content.append(item)
     
     def pop_status(self):
-        new_stack = self.content
-        target = new_stack.pop()
+        target = self.content[-1]
         return target
 
-a = Stack()
-a.append("cc")
-print(a.content)
-a.append("bb")
-print(a.content)
-b = a.pop()
-print(a.content)
-print(b)
+img = cv2.imread("image/save.png")
+
+s = Stack()
+
+s.append(img)
+print(len(s.content))
+s.append(img)
+print(len(s.content))
+p = s.pop()
+print(len(s.content))
+c = s.pop_status()
+print(len(s.content))
