@@ -12,22 +12,34 @@ class Stack():
         target = self.content.pop() 
         return target
 
-    def append(self,item):
+    def push(self,item):
         self.content.append(item)
     
     def pop_status(self):
         target = self.content[-1]
         return target
 
-img = cv2.imread("image/save.png")
+class Queue():
+    def __init__(self):
+        self.content = []
 
-s = Stack()
+    def dequeue(self):
+        target = self.content.pop(0) 
+        return target
 
-s.append(img)
-print(len(s.content))
-s.append(img)
-print(len(s.content))
-p = s.pop()
-print(len(s.content))
-c = s.pop_status()
-print(len(s.content))
+    def inqueue(self,item):
+        self.content.insert(0,item)
+
+
+
+def BubbleSortImg(InputList):#sorted by size
+    imglist=[]
+    path = os.path.abspath('')+'/image/album/'
+    for item in InputList:
+        img = cv2.imread(path+item)
+        imglist.append(img)
+    for i in range(len(imglist)-1,-1,-1):
+        for j in range(i):
+            if len(imglist[j]) > len(imglist[j+1]):
+                imglist[j], imglist[j+1] = imglist[j+1], imglist[j]
+    return imglist

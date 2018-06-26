@@ -1,15 +1,17 @@
-import sys
 from PyQt5 import QtGui,QtWidgets,QtCore
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from package.classes import Stack
+from package.classes import Stack, Queue, BubbleSortImg
 import numpy as np
 import cv2
 import os
+import time
+import sys
 
 name = 0
 File = 0
-
+Prev = 0
+Next = Queue()
 ImageStatus = Stack()
 GreyScaleOri = None
 
@@ -50,16 +52,16 @@ class Window(QtWidgets.QMainWindow):
 
         Previous = QtWidgets.QAction('&Previous', self)
         Previous.setStatusTip('Previous image')
-        Previous.triggered.connect(self.previous)
+        Previous.triggered.connect(self.previousstate)
 
         self.statusBar()
 
         mainMenu = self.menuBar()
         fileMenu = mainMenu.addMenu('&File')
         fileMenu.addAction(extractAction)
+        fileMenu.addAction(openImage)
 
         imageMenu = mainMenu.addMenu('&Image')
-        imageMenu.addAction(openImage)
         imageMenu.addAction(GreyScale)
         imageMenu.addAction(BackOrigin)
 
@@ -81,10 +83,25 @@ class Window(QtWidgets.QMainWindow):
         self.toolBar = self.addToolBar("Sharpen")
         self.toolBar.addAction(Sharp)
 
-        PreviousImg = QtWidgets.QAction(QtGui.QIcon('image/icon/previous.png'),'Previous', self)
-        PreviousImg.triggered.connect(self.previous)
-        self.toolBar = self.addToolBar("Previous")
-        self.toolBar.addAction(PreviousImg)
+        Blur = QtWidgets.QAction(QtGui.QIcon('image/icon/blur.png'),'Blur', self)
+        Blur.triggered.connect(self.blur)
+        self.toolBar = self.addToolBar("Blur")
+        self.toolBar.addAction(Blur)
+
+        DeNoising = QtWidgets.QAction(QtGui.QIcon('image/icon/denoising.png'),'DeNoising', self)
+        DeNoising.triggered.connect(self.denoising)
+        self.toolBar = self.addToolBar("DeNoising")
+        self.toolBar.addAction(DeNoising)
+
+        PreviousState = QtWidgets.QAction(QtGui.QIcon('image/icon/previousstate.png'),'PreviousState', self)
+        PreviousState.triggered.connect(self.previousstate)
+        self.toolBar = self.addToolBar("PreviousState")
+        self.toolBar.addAction(PreviousState)
+
+        NextState = QtWidgets.QAction(QtGui.QIcon('image/icon/nextstate.png'),'NextState', self)
+        NextState.triggered.connect(self.nextstate)
+        self.toolBar = self.addToolBar("NextState")
+        self.toolBar.addAction(NextState)
 
         BackToOrigin = QtWidgets.QAction(QtGui.QIcon('image/icon/bto.png'),'BackToOrigin', self)
         BackToOrigin.triggered.connect(self.back_to_origin)
@@ -96,8 +113,17 @@ class Window(QtWidgets.QMainWindow):
         self.toolBar = self.addToolBar("Save to album")
         self.toolBar.addAction(Save)
 
+        PlayAlbum = QtWidgets.QAction(QtGui.QIcon('image/icon/playalbum.png'),'Play Album', self)
+        PlayAlbum.triggered.connect(self.playalbum)
+        self.toolBar = self.addToolBar("Play Album")
+        self.toolBar.addAction(PlayAlbum)
+
+        PlayAlbumSorted = QtWidgets.QAction(QtGui.QIcon('image/icon/playalbumsorted.png'),'Play Sorted Album', self)
+        PlayAlbumSorted.triggered.connect(self.play_album_sorted)
+        self.toolBar = self.addToolBar("Play Sorted Album")
+        self.toolBar.addAction(PlayAlbumSorted)
+
         self.show()
-    
     
     def imageTable(self):
         self.imageT = QLabel(self)
@@ -107,14 +133,16 @@ class Window(QtWidgets.QMainWindow):
         self.setCentralWidget(self.imageT)
         
     def open_image(self):
-        global name 
-        name = QtWidgets.QFileDialog.getOpenFileName(self,'Open File')
+        global name
         global File
+        global ImageStatus
+        global Next
+        name = QtWidgets.QFileDialog.getOpenFileName(self,'Open File')
         File = name[0]
         img_file = cv2.imread(File)
-        global ImageStatus
+        Next.content = []
         ImageStatus.content = []
-        ImageStatus.append(img_file)
+        ImageStatus.push(img_file)
         cv2.imwrite('image/template/template.jpg',img_file)
         self.imageTable()
         pixmap1 = QPixmap(File)
@@ -132,9 +160,14 @@ class Window(QtWidgets.QMainWindow):
             pass
     
     def grayscale(self):
+        global Prev
+        global Next
         global File
         global ImageStatus
         global GreyScaleOri
+        if Prev == 1:
+            Prev = 0
+            Next.content = []
         if File != 0:
             img_file = ImageStatus.pop_status()
             if img_file.ndim == 3:
@@ -142,7 +175,7 @@ class Window(QtWidgets.QMainWindow):
                 img_file = cv2.cvtColor(img_file,cv2.COLOR_BGR2GRAY)
             elif img_file.ndim == 2:
                 img_file = GreyScaleOri
-            ImageStatus.append(img_file)
+            ImageStatus.push(img_file)
             cv2.imwrite('image/template/template.jpg',img_file)
             self.imageTable()
             File2 = 'image/template/template.jpg'
@@ -161,13 +194,18 @@ class Window(QtWidgets.QMainWindow):
                 pass
 
     def sharpen(self):
+        global Next
+        global Prev
         global File
         global ImageStatus
+        if Prev == 1:
+            Prev = 0
+            Next.content = []
         if File != 0:
             img_file = ImageStatus.pop_status()
             kernel_sharpening = np.array([[-1,-1,-1],[-1,9,-1],[-1,-1,-1]])
             img_file = cv2.filter2D(img_file, -1, kernel_sharpening)
-            ImageStatus.append(img_file)
+            ImageStatus.push(img_file)
             cv2.imwrite('image/template/template.jpg',img_file)
             self.imageTable()
             File2 = 'image/template/template.jpg'
@@ -185,15 +223,82 @@ class Window(QtWidgets.QMainWindow):
             else:
                 pass
 
-    def previous(self):
+    def blur(self):
+        global Next
+        global Prev
         global File
         global ImageStatus
+        if Prev == 1:
+            Prev = 0
+            Next.content = []
+        if File != 0:
+            img_file = ImageStatus.pop_status()
+            kernel_3x3 = np.ones((3,3),np.float32)/9
+            img_file = cv2.filter2D(img_file, -1, kernel_3x3)
+            ImageStatus.push(img_file)
+            cv2.imwrite('image/template/template.jpg',img_file)
+            self.imageTable()
+            File2 = 'image/template/template.jpg'
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
+    
+    def denoising(self):
+        global Next
+        global Prev
+        global File
+        global ImageStatus
+        if Prev == 1:
+            Prev = 0
+            Next.content = []
+        if File != 0:
+            img_file = ImageStatus.pop_status()
+            if img_file.ndim == 3:
+                img_file = cv2.fastNlMeansDenoisingColored(img_file, None, 6, 6, 7, 21)
+            elif img_file.ndim == 2:
+                img_file = cv2.fastNlMeansDenoising(img_file, None, 9,13)
+            ImageStatus.push(img_file)
+            cv2.imwrite('image/template/template.jpg',img_file)
+            self.imageTable()
+            File2 = 'image/template/template.jpg'
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
+
+    def previousstate(self):
+        global Prev
+        global File
+        global Next
+        global ImageStatus
+        if Prev == 0:
+            Prev = 1
         if File != 0:
             try:
                 if len(ImageStatus.content) == 1:
                     img_file = ImageStatus.pop_status()
                 else:
-                    ImageStatus.pop()
+                    img_file = ImageStatus.pop()
+                    Next.inqueue(img_file)
                     img_file = ImageStatus.pop_status()
             except:
                 pass
@@ -213,14 +318,50 @@ class Window(QtWidgets.QMainWindow):
                 self.open_image()
             else:
                 pass
-    
+
+    def nextstate(self):
+        global Prev
+        global File
+        global Next
+        global ImageStatus
+        if Prev == 1:
+            if File != 0:
+                try:
+                    if len(Next.content) == 0:
+                        img_file = ImageStatus.pop_status()
+                    else:
+                        img_file = Next.dequeue()
+                        ImageStatus.push(img_file)
+                except:
+                    pass
+                cv2.imwrite('image/template/template.jpg',img_file)
+                self.imageTable()
+                File2 = 'image/template/template.jpg'
+                pixmap1 = QPixmap(File2)
+                self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+                self.imageT.setPixmap(self.pixmap)
+                self.imageT.setMinimumSize(400,300)
+                self.setCentralWidget(self.imageT)
+            else:
+                choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                    "Open an image?",
+                                                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                if choice == QtWidgets.QMessageBox.Yes:
+                    self.open_image()
+                else:
+                    pass
+        else:
+            pass
+
     def back_to_origin(self):
+        global Prev
         global File
         global ImageStatus
+        if Prev == 1:
+            Prev = 0
         if File != 0:
             img_file = cv2.imread(File)
-            ImageStatus.content = []
-            ImageStatus.content.append(img_file)
+            ImageStatus.push(img_file)
             self.imageTable()
             pixmap1 = QPixmap(File)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
@@ -247,6 +388,7 @@ class Window(QtWidgets.QMainWindow):
             self.imageTable()
             pixmap1 = QPixmap(File)
             img_file = cv2.imread(File)
+            fileNum = int(os.listdir(path)[fileNum-1][-5::-1])+1
             cv2.imwrite(path+str(fileNum)+'.jpg',img_file)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
@@ -260,6 +402,40 @@ class Window(QtWidgets.QMainWindow):
                 self.open_image()
             else:
                 pass
+    
+    def playalbum(self):
+        path = os.path.abspath('')+'/image/album/'
+        self.imageTable()
+        QApplication.processEvents()
+        for item in os.listdir(path):
+            img_file = cv2.imread(path+item)
+            cv2.imwrite('image/template/template.jpg',img_file)
+            File2 = 'image/template/template.jpg'
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+            QApplication.processEvents()
+            time.sleep(1)
+
+    def play_album_sorted(self):
+        path = os.path.abspath('')+'/image/album/'
+        inputlist = os.listdir(path)
+        imglist = BubbleSortImg(inputlist)
+        self.imageTable()
+        QApplication.processEvents()
+        for item in imglist:
+            img_file = item
+            cv2.imwrite('image/template/template.jpg',img_file)
+            File2 = 'image/template/template.jpg'
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+            QApplication.processEvents()
+            time.sleep(1)
 
 def run():
     app = QtWidgets.QApplication(sys.argv)
