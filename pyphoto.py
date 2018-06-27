@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 from package.classes import Stack, Queue, BubbleSortImg
 import numpy as np
 import cv2
-import os
+import os, shutil
 import time
 import sys
 
@@ -113,6 +113,11 @@ class Window(QtWidgets.QMainWindow):
         self.toolBar = self.addToolBar("Save to album")
         self.toolBar.addAction(Save)
 
+        Remove = QtWidgets.QAction(QtGui.QIcon('image/icon/delete.png'),'Remove from album', self)
+        Remove.triggered.connect(self.remove_from_album)
+        self.toolBar = self.addToolBar("Remove from album")
+        self.toolBar.addAction(Remove)
+
         PlayAlbum = QtWidgets.QAction(QtGui.QIcon('image/icon/playalbum.png'),'Play Album', self)
         PlayAlbum.triggered.connect(self.playalbum)
         self.toolBar = self.addToolBar("Play Album")
@@ -148,6 +153,8 @@ class Window(QtWidgets.QMainWindow):
         pixmap1 = QPixmap(File)
         self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
         self.imageT.setPixmap(self.pixmap)
+        self.imageT.setAlignment(QtCore.Qt.AlignCenter)
+        self.imageT.setMinimumSize(400,300)
         self.setCentralWidget(self.imageT)
 
     def close_application(self):
@@ -182,6 +189,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
         else:
@@ -212,6 +220,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
         else:
@@ -242,6 +251,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
         else:
@@ -274,6 +284,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
         else:
@@ -308,6 +319,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
         else:
@@ -340,6 +352,7 @@ class Window(QtWidgets.QMainWindow):
                 pixmap1 = QPixmap(File2)
                 self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
                 self.imageT.setPixmap(self.pixmap)
+                self.imageT.setAlignment(QtCore.Qt.AlignCenter)
                 self.imageT.setMinimumSize(400,300)
                 self.setCentralWidget(self.imageT)
             else:
@@ -366,6 +379,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
         else:
@@ -384,14 +398,56 @@ class Window(QtWidgets.QMainWindow):
             fileNum = 0
             for item in os.listdir(path):
                 fileNum = fileNum+1
-            File = 'image/template/template.jpg'
+            File2 = 'image/template/template.jpg'
             self.imageTable()
-            pixmap1 = QPixmap(File)
-            img_file = cv2.imread(File)
+            pixmap1 = QPixmap(File2)
+            img_file = cv2.imread(File2)
             fileNum = int(os.listdir(path)[fileNum-1][-5::-1])+1
             cv2.imwrite(path+str(fileNum)+'.jpg',img_file)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
+            self.imageT.setMinimumSize(400,300)
+            self.setCentralWidget(self.imageT)
+        else:
+            choice = QtWidgets.QMessageBox.question(self, 'Error!',
+                                                "Open an image?",
+                                                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.open_image()
+            else:
+                pass
+    
+    def remove_from_album(self):
+        global File
+        global ImageStatus
+        global Prev
+        global Next
+        if File != 0:
+            path = os.path.abspath('')+'/image/album/'
+            for the_file in os.listdir(path):
+                file_path = os.path.join(path, the_file)
+                try:
+                    if os.path.isfile(file_path) and file_path == str(File):
+                        os.unlink(file_path)
+                        File = 0
+                        Prev = 0
+                        Next = Queue()
+                        ImageStatus = Stack()
+                        GreyScaleOri = None
+                    else:
+                        pass
+                except Exception as e:
+                    print(e)
+            if os.path.isfile(file_path) and file_path == str(File):
+                File2 = 'image/template/deleted.jpg'
+            else:
+                File2 = 'image/template/albumerror.jpg'
+            self.imageTable()
+            pixmap1 = QPixmap(File2)
+            self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
+            self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
         else:
@@ -414,6 +470,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
             QApplication.processEvents()
@@ -432,6 +489,7 @@ class Window(QtWidgets.QMainWindow):
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
             self.imageT.setPixmap(self.pixmap)
+            self.imageT.setAlignment(QtCore.Qt.AlignCenter)
             self.imageT.setMinimumSize(400,300)
             self.setCentralWidget(self.imageT)
             QApplication.processEvents()

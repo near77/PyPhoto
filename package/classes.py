@@ -43,3 +43,14 @@ def BubbleSortImg(InputList):#sorted by size
             if len(imglist[j]) > len(imglist[j+1]):
                 imglist[j], imglist[j+1] = imglist[j+1], imglist[j]
     return imglist
+
+path = os.path.abspath('')+'/image/album/'
+File = "2.jpg"
+for the_file in os.listdir(path):
+    file_path = os.path.join(path, the_file)
+    try:
+        if os.path.isfile(file_path) and the_file == File:
+            os.unlink(file_path)
+        #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+    except Exception as e:
+        print(e)
