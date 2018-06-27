@@ -442,7 +442,7 @@ class Window(QtWidgets.QMainWindow):
             if os.path.isfile(file_path) and file_path == str(File):
                 File2 = 'image/template/deleted.jpg'
             else:
-                File2 = 'image/template/albumerror.jpg'
+                File2 = 'image/template/albumerror.png'
             self.imageTable()
             pixmap1 = QPixmap(File2)
             self.pixmap = pixmap1.scaled(self.width(),self.height(),QtCore.Qt.KeepAspectRatio)
